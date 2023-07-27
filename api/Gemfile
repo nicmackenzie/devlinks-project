@@ -18,6 +18,8 @@ gem "rake"
 
 gem 'rack-contrib'
 
+gem "rack-cors", "~> 1.1"
+
 gem 'sinatra-cors', '~> 1.2'
 
 # Provides functionality to interact with a SQLite3 database
