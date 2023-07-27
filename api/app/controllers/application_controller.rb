@@ -2,22 +2,6 @@ require_relative '../../config/environment'
 
 class ApplicationController < Sinatra::Base
   set :default_content_type, 'application/json'
-  # use Rack::JSONBodyParser
-
-  # configure do
-  #   enable :cross_origin
-  # end
-  
-  # before do
-  #   response.headers['Access-Control-Allow-Origin'] = '*'
-  # end
-  
-  # options "*" do
-  #   response.headers["Allow"] = "GET, POST, PUT, DELETE, OPTIONS"
-  #   response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept, X-User-Email, X-Auth-Token"
-  #   response.headers["Access-Control-Allow-Origin"] = "*"
-  #   200
-  # end
 
   # helper method to return json data
   def create_response(success, status_code, message, data)
@@ -42,15 +26,40 @@ class ApplicationController < Sinatra::Base
   end
 
   post '/signup' do
-    user = find_by(email: params[:email])
+    user = User.find_by(email: params[:email])
+    
 
     if user
       response = create_response(false, 401, 'Email already exists', nil)
+      response.to_json
     else
-       User.create(user_name: params[:name], email: params[:email],devtype: params[:devtype],
-                   experience: params[:experience],image_url: '')
+       new_user = User.create(user_name: params[:fullName], email: params[:email],devtype: params[:devtype],
+                   experience: params[:experience],image_url: 'https://igqjyslipxclzwcefxrb.supabase.co/storage/v1/object/public/avatars/NzgxMDczLmpwZw.jpg')
+      
+       response = create_response(true, 201, nil, new_user)
+       response.to_json
     end
 
+  end
+
+  get '/users' do
+    stacks = User.all
+    response = create_response(true,200,nil,stacks)
+    response.to_json(include: :userlinks)
+  end
+
+  delete '/user/delete/:id' do
+    id = params[:id]
+    user = User.find(id)
+
+    ActiveRecord::Base.transaction do
+      user.userlinks.destroy_all
+      user.userstacks.destroy_all
+      user.destroy
+    end
+    
+    response = create_response(true, 204, nil , nil)
+    response.to_json
   end
 
   get '/stacks' do
